@@ -1,2 +1,3 @@
 # OpenGL-Learning
-https://learnopengl-cn.github.io/
+This is my learning of OpenGL following https://learnopengl.com/<br>
+The Chinese Edition is https://learnopengl-cn.github.io/
