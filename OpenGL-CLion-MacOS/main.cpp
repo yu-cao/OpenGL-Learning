@@ -93,6 +93,11 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // use the uniform to control the shader param
+//        float timeValue = glfwGetTime();
+//        float offset = sin(timeValue);
+//        ourShader.setFloat("xOffset",offset);
+
         // render the triangle
         ourShader.use();
         glBindVertexArray(VAO);
