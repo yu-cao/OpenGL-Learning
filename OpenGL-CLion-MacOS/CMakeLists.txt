@@ -20,7 +20,7 @@ link_libraries(${OPENGL} ${GLEW_LINK} ${GLFW_LINK})
 
 # 执行编译命令
 # 这个glad.c随意你放在哪，要注意路径就好
-set(SOURCE_FILES "/usr/local/Cellar/glad/src/glad.c" "main.cpp")
+set(SOURCE_FILES "/usr/local/Cellar/glad/src/glad.c" "main.cpp" stb_image/stb_image.h stb_image/stb_image_implementation.cpp)
 add_executable(OpenGL_CLion_MacOS ${SOURCE_FILES})
 if (APPLE)
     target_link_libraries(OpenGL_CLion_MacOS "-framework OpenGL")
