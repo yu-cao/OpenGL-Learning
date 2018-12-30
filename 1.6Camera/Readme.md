@@ -4,7 +4,7 @@ OpenGL本身没有摄像机(Camera)的概念，但我们可以通过把场景中
 
 #视角移动
 对于我们的摄像机系统来说，我们只关心俯仰角(pitch)和偏航角(yaw)
-![image](http://github.com/yu-cao/OpenGL-Learning/1.6Camera/Reference/camera_pitch_yaw_roll.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/1.6Camera/Reference/camera_pitch_yaw_roll.png)
 
 #LookAt矩阵
 如果你使用3个相互垂直（或非线性）的轴定义了一个坐标空间，你可以用这3个轴外加一个平移向量来创建一个矩阵，并且你可以用这个矩阵乘以任何向量来将其变换到那个坐标空间。这正是LookAt矩阵所做的。我们要做的只是定义一个摄像机位置，一个目标位置和一个表示世界空间中的上向量的向量。
