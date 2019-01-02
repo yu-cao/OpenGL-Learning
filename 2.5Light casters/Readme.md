@@ -1,11 +1,13 @@
 <h2>平行光</h2>
 当我们使用一个假设光源处于无限远处的模型时，它就被称为定向光，因为它的所有光线都有着相同的方向，它与光源的位置是没有关系的。比如太阳光。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.Light%20casters/Reference/light_casters_directional.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.5Light%20casters/Reference/light_casters_directional.png)
 
 
 <h2>点光源</h2>
 在大部分的3D模拟中，我们都希望模拟的光源仅照亮光源附近的区域而不是整个场景，所以点光源做好的核心是做好衰减。
+
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.5Light%20casters/Reference/light_casters_point.png)
 
 根据片段距光源的距离计算了衰减值，之后我们会将它乘以光的强度向量：
 
@@ -34,7 +36,7 @@
 |600|1.0|0.007|0.0002|
 |3250|1.0|0.0014|0.000007|
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.Light%20casters/Reference/attenuation.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.5Light%20casters/Reference/attenuation.png)
 
 光在近距离的时候有着最高的强度，但随着距离增长，它的强度明显减弱，并缓慢地在距离大约100的时候强度接近0。
 
@@ -43,7 +45,7 @@
 
 OpenGL中聚光是用一个世界空间位置、一个方向和一个切光角(Cutoff Angle)来表示的，切光角指定了聚光的圆锥半径。对于每个片段，我们会计算片段是否位于聚光的切光方向之间（也就是在锥形内），如果是的话，我们就会相应地照亮片段。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.Light%20casters/Reference/light_casters_spotlight_angles.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/2.5Light%20casters/Reference/light_casters_spotlight_angles.png)
 
 + `LightDir`：从片段指向光源的向量。
 + `SpotDir`：聚光所指向的方向。
