@@ -7,7 +7,8 @@ set(GLEW_H /usr/local/Cellar/glew/2.1.0/include/GL)
 set(GLFW_H /usr/local/Cellar/glfw/3.2.1/include/GLFW)
 set(GLAD_H /usr/local/Cellar/glad)
 set(GLM_H /usr/local/Cellar/glm) # 增加了glmath库的支持
-include_directories(${GLEW_H} ${GLFW_H} ${GLAD_H} ${GLM_H})
+set(ASSIMP_H /usr/local/Cellar/assimp/4.1.0/include/assimp)
+include_directories(${GLEW_H} ${GLFW_H} ${GLAD_H} ${GLM_H} ${ASSIMP_H})
 
 # 添加目标链接
 set(GLEW_LINK /usr/local/Cellar/glew/2.1.0/lib/libGLEW.2.1.dylib)
@@ -15,12 +16,14 @@ set(GLEW_LINK /usr/local/Cellar/glew/2.1.0/lib/libGLEW.2.1.dylib)
 # 参考情况：https://github.com/glfw/glfw/issues/908
 # 安装方法：https://my.oschina.net/freeblues/blog/687630
 #set(GLFW_LINK /usr/local/Cellar/glfw/3.2.1/lib/libglfw.3.dylib)
-set(GLFW_LINK /usr/local/lib/libglfw.3.3.dylib) 
-link_libraries(${OPENGL} ${GLEW_LINK} ${GLFW_LINK})
+set(GLFW_LINK /usr/local/lib/libglfw.3.3.dylib)
+set(ASSIMP_LINK /usr/local/Cellar/assimp/4.1.0/lib/libassimp.4.1.0.dylib)
+link_libraries(${OPENGL} ${GLEW_LINK} ${GLFW_LINK} ${ASSIMP_LINK})
 
 # 执行编译命令
 # 这个glad.c随意你放在哪，要注意路径就好
-set(SOURCE_FILES "/usr/local/Cellar/glad/src/glad.c" "main.cpp" stb_image/stb_image.h stb_image/stb_image_implementation.cpp include/Camera.h)
+set(SOURCE_FILES "/usr/local/Cellar/glad/src/glad.c" "src/main.cpp" "include/stb_image/stb_image.h"
+        "include/stb_image/stb_image_implementation.cpp" "include/Camera.h" "include/Mesh.h" "include/Model.h")
 add_executable(OpenGL_CLion_MacOS ${SOURCE_FILES})
 if (APPLE)
     target_link_libraries(OpenGL_CLion_MacOS "-framework OpenGL")
