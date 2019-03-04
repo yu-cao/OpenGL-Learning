@@ -23,7 +23,7 @@ const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
 // Camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float lastX = (float)SCR_WIDTH / 2.0f;
 float lastY = (float)SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -32,8 +32,9 @@ bool firstMouse = true;
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
 
-bool shadows = true;
-bool shadowsKeyPressed = false;
+bool hdr = true;
+bool hdrKeyPressed = false;
+float exposure = 3.0f;
 
 GLFWwindow* init(int& errorCode)
 {
@@ -91,14 +92,14 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		camera.ProcessKeyboard(UP, deltaTime);
 
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !shadowsKeyPressed)
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !hdrKeyPressed)
 	{
-		shadows = !shadows;
-		shadowsKeyPressed = true;
+		hdr = !hdr;
+		hdrKeyPressed = true;
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
 	{
-		shadowsKeyPressed = false;
+		hdrKeyPressed = false;
 	}
 }
 
