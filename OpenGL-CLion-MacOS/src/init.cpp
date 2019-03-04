@@ -32,10 +32,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f; // 当前帧与上一帧的时间差
 float lastFrame = 0.0f; // 上一帧的时间
 
-bool hdr = true;
-bool hdrKeyPressed = false;
-float exposure = 3.0f;
-
 GLFWwindow* init(int& errorCode)
 {
 	glfwInit();
@@ -91,16 +87,6 @@ void processInput(GLFWwindow *window)
 		camera.ProcessKeyboard(DOWN, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		camera.ProcessKeyboard(UP, deltaTime);
-
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && !hdrKeyPressed)
-	{
-		hdr = !hdr;
-		hdrKeyPressed = true;
-	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-	{
-		hdrKeyPressed = false;
-	}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
