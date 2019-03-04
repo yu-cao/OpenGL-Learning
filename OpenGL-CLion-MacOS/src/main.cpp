@@ -35,7 +35,8 @@ int main()
 	//创建一个浮点帧缓冲
 	unsigned int hdrFBO;
 	glGenFramebuffers(1, &hdrFBO);
-	//创建一个浮点颜色缓冲
+
+	//创建一个浮点颜色缓冲，以纹理形式作为附件
 	unsigned int colorBuffer;
 	glGenTextures(1, &colorBuffer);
 	glBindTexture(GL_TEXTURE_2D, colorBuffer);
@@ -43,7 +44,7 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	//创建深度缓冲（渲染缓冲）
+	//创建深度缓冲（渲染缓冲对象）作为附件
 	unsigned int rboDepth;
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
