@@ -128,9 +128,9 @@ float D_GGX_TR(vec3 N, vec3 H, float a)
 
 ![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/geometry_shadowing.png)
 
-<img src="http://latex.codecogs.com/svg.latex?G_{SchlickGGX}(n, v, k) = \frac{n \cdot v}{(n \cdot v)(1 - k) + k }" />
+<img src="http://latex.codecogs.com/svg.latex?G_{SchlickGGX}(n,v,k) = \frac{n \cdot v}{(n \cdot v)(1-k)+k}" />
 
-k是α基于几何函数是针对直接光照还是针对IBL光照的重映射(Remapping) :
+k是α基于几何函数是针对直接光照或是针对IBL光照的重映射(Remapping) :
 
 <img src="http://latex.codecogs.com/svg.latex?k_{direct} = \frac{(\alpha + 1)^2}{8}" />
 
