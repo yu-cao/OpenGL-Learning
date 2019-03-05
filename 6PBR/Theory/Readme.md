@@ -1,4 +1,4 @@
-<h2>PBR</h2>
+<h2>PBR 原理</h2>
 
 基于物理的渲染。为了使用一种更符合物理学规律的方式来模拟光线，因此这种渲染方式与我们原来的Phong或者Blinn-Phong光照算法相比总体上看起来要更真实一些。
 
@@ -14,7 +14,7 @@
 
 达到微观尺度之后任何平面都可以用被称为微平面(Microfacets)的细小镜面来进行描绘。根据平面粗糙程度的不同，当我们特指镜面光/镜面反射时，入射光线更趋向于向完全不同的方向发散(Scatter)开来，进而产生出分布范围更广泛的镜面反射。而与之相反的是，对于一个光滑的平面，光线大体上会更趋向于向同一个方向反射，造成更小更锐利的反射
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/microfacets_light_rays.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/microfacets_light_rays.png)
 
 在微观尺度下，没有任何平面是完全光滑的。然而由于这些微平面已经微小到无法逐像素的继续对其进行区分，因此我们只有假设一个粗糙度(Roughness)参数，然后用统计学的方法来概略的估算微平面的粗糙程度。我们可以基于一个平面的粗糙度来计算出某个向量的方向与微平面平均取向方向一致的概率。这个向量便是位于光线向量l和视线向量v之间的中间向量
 
@@ -22,7 +22,7 @@
 
 微平面的取向方向与中间向量的方向越是一致，镜面反射的效果就越是强烈越是锐利。然后再加上一个介于0到1之间的粗糙度参数，这样我们就能概略的估算微平面的取向情况了：
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/ndf.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/ndf.png)
 
 <h3>能量守恒</h3>
 
@@ -47,11 +47,11 @@ float kD = 1.0 - ks;                        // 折射/漫反射 部分
 
 辐射通量：辐射通量Φ表示的是一个光源所输出的能量，以瓦特为单位。辐射通量将会计算由不同波长构成的函数的总面积。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/daylight_spectral_distribution.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/daylight_spectral_distribution.png)
 
 立体角：立体角用ω表示，它可以为我们描述投射到单位球体上的一个截面的大小或者面积。投射到这个单位球体上的截面的面积就被称为立体角(Solid Angle)，可以把立体角想象成为一个带有体积的方向：（把自己想象成为一个站在单位球面的中心的观察者，向着投影的方向看。这个投影轮廓的大小就是立体角）
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/solid_angle.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/solid_angle.png)
 
 辐射强度*I*：辐射强度(Radiant Intensity)表示的是在单位球面上，一个光源向每单位立体角所投送的辐射通量（计算公式也就是辐射通量除以立体角）
 
@@ -63,11 +63,11 @@ float kD = 1.0 - ks;                        // 折射/漫反射 部分
 
 辐射率是辐射度量学上表示一个区域平面上光线总量的物理量，它受到入射(Incident)（或者来射）光线与平面法线间的夹角θ的余弦值cosθ的影响：当直接辐射到平面上的程度越低时，光线就越弱，而当光线完全垂直于平面时强度最高。cosθ 就直接对应于光线的方向向量和平面法向量的点积：`float cosTheta = dot(lightDir, N);`
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/radiance.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/radiance.png)
 
 事实上，当涉及到辐射率时，我们通常关心的是所有投射到点p上的光线的总和，而这个和就称为辐射照度或者辐照度
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/hemisphere.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/hemisphere.png)
 
 我们知道在渲染方程中L代表通过某个无限小的立体角ωi在某个点上的辐射率，而立体角可以视作是**入射方向向量ωi**。注意我们利用**光线和平面间的入射角的余弦值cosθ来计算能量，亦即从辐射率公式L转化至反射率公式时的n⋅ωi**。**ωo表示观察方向**，也就是出射方向。**反射率公式计算了点p在ωo方向上被反射出来的辐射率Lo(p,ωo)的总和。**或者换句话说：**Lo表示了从ωo方向上观察，光线投射到点p上反射出来的辐照度。**
 
@@ -105,7 +105,7 @@ c表示表面颜色（回想一下漫反射表面纹理）。除以π是为了�
 
 h表示用来与平面上微平面做比较用的中间向量，而a表示表面粗糙度。粗糙度很低（也就是说表面很光滑）的时候，与中间向量取向一致的微平面会高度集中在一个很小的半径范围内。由于这种集中性，NDF最终会生成一个非常明亮的斑点。但是当表面比较粗糙的时候，微平面的取向方向会更加的随机。视觉效果：
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/ndf.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/ndf.png)
 
 ```glsl
 float D_GGX_TR(vec3 N, vec3 H, float a)
@@ -126,13 +126,15 @@ float D_GGX_TR(vec3 N, vec3 H, float a)
 
 从统计学上近似的求得了微平面间相互遮蔽的比率，这种相互遮蔽会损耗光线的能量。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/geometry_shadowing.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/geometry_shadowing.png)
 
 <img src="http://latex.codecogs.com/svg.latex?G_{SchlickGGX}(n, v, k) = \frac{n \cdot v}{(n \cdot v)(1 - k) + k }" />
 
 k是α基于几何函数是针对直接光照还是针对IBL光照的重映射(Remapping) :
 
-<img src="http://latex.codecogs.com/svg.latex?k_{direct} = \frac{(\alpha + 1)^2}{8}" />   或者  <img src="http://latex.codecogs.com/svg.latex?k_{IBL} = \frac{\alpha^2}{2}" />
+<img src="http://latex.codecogs.com/svg.latex?k_{direct} = \frac{(\alpha + 1)^2}{8}" />
+
+<img src="http://latex.codecogs.com/svg.latex?k_{IBL} = \frac{\alpha^2}{2}" />
 
 为了有效的估算几何部分，需要将观察方向（几何遮蔽(Geometry Obstruction)）和光线方向向量（几何阴影(Geometry Shadowing)）都考虑进去。我们可以使用史密斯法(Smith’s method)来把两者都纳入其中：
 
@@ -140,7 +142,7 @@ k是α基于几何函数是针对直接光照还是针对IBL光照的重映射(R
 
 使用史密斯法与Schlick-GGX作为Gsub可以得到如下所示不同粗糙度的视觉效果：
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/geometry.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/geometry.png)
 
 ```glsl
 float GeometrySchlickGGX(float NdotV, float k)
@@ -174,7 +176,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float k)
 
 F0表示平面的基础反射率，它是利用所谓折射指数(Indices of Refraction)或者说IOR计算得出的。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/fresnel.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/fresnel.png)
 
 上图中Fresnel现象在观察角与表面法线呈90°时尤其明显，反光越强
 
@@ -200,8 +202,8 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 
 最后我们得到这样的BRDF：
 
-<img src="http://latex.codecogs.com/svg.latex?L_o(p,\omega_o) = \int\limits_{\Omega} (k_d\frac{c}{\pi} + k_s\frac{DFG}{4(\omega_o \cdot n)(\omega_i \cdot n)})L_i(p,\omega_i) n \cdot \omega_i  d\omega_i" />
+<img src="http://latex.codecogs.com/svg.latex?L_o(p,\omega_o) = \int\limits_{\Omega} (k_d\frac{c}{\pi} + k_s\frac{DFG}{4(\omega_o \cdot n)(\omega_i \cdot n)}) L_i(p,\omega_i) n \cdot \omega_i  d\omega_i" />
 
 PBR常见的输出，通过Substance Designer：
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.9SSAO/Reference/textures.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/6PBR/Theory/Reference/textures.png)
