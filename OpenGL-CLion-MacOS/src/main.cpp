@@ -1,6 +1,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <random>
 
 #include "../include/MyShader.h"
 #include "../include/Camera.h"
@@ -26,21 +27,12 @@ int main()
 
 	// build and compile our shader program
     // ------------------------------------
-	Shader shaderGeometryPass("shader/DeferRender/g_buffer.vert", "shader/DeferRender/g_buffer.frag");
-	Shader shaderLightingPass("shader/DeferRender/deferred_shading.vert", "shader/DeferRender/deferred_shading.frag");
-	Shader shaderLightBox("shader/DeferRender/deferred_light_box.vert", "shader/DeferRender/deferred_light_box.frag");
+	Shader shaderGeometryPass("shader/SSAO/ssao_geometry.vert", "shader/SSAO/ssao_geometry.frag");
+	Shader shaderLightingPass("shader/SSAO/ssao.vert", "shader/SSAO/ssao_lighting.frag");
+	Shader shaderSSAO("shader/SSAO/ssao.vert", "shader/SSAO/ssao.frag");
+	Shader shaderSSAOBlur("shader/SSAO/ssao.vert","shader/SSAO/ssao_blur.frag");
 
 	Model nanosuit("model/nanosuit/nanosuit.obj");
-	std::vector<glm::vec3> objectPositions;
-	objectPositions.emplace_back(-3.0,  -3.0, -3.0);
-	objectPositions.emplace_back(0.0,  -3.0, -3.0);
-	objectPositions.emplace_back(3.0,  -3.0, -3.0);
-	objectPositions.emplace_back(-3.0,  -3.0,  0.0);
-	objectPositions.emplace_back(0.0,  -3.0,  0.0);
-	objectPositions.emplace_back(3.0,  -3.0,  0.0);
-	objectPositions.emplace_back(-3.0,  -3.0,  3.0);
-	objectPositions.emplace_back(0.0,  -3.0,  3.0);
-	objectPositions.emplace_back(3.0,  -3.0,  3.0);
 
 	// configure g-buffer framebuffer
 	// ------------------------------
@@ -85,32 +77,87 @@ int main()
 		std::cout << "Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	unsigned int ssaoFBO, ssaoBlurFBO;
+	glGenFramebuffers(1,&ssaoFBO);
+	glGenFramebuffers(1,&ssaoBlurFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER,ssaoFBO);
+
+	unsigned int ssaoColorBuffer, ssaoColorBufferBlur;
+	glGenTextures(1, &ssaoColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSAO Framebuffer not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+	glGenTextures(1, &ssaoColorBufferBlur);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSAO Blur Framebuffer not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// generate sample kernel
+	// ----------------------
+	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);//平均分布在[0,1]中
+	std::default_random_engine generator;
+	std::vector<glm::vec3> ssaoKernel;
+	for (unsigned int i = 0; i < 64; ++i)//假设我们有一个单位半球，我们可以获得一个拥有最大64样本值的采样核心
+	{
+		glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+		sample = glm::normalize(sample);
+		sample *= randomFloats(generator);
+		float scale = float(i) / 64.0;
+
+		//将更多的注意放在靠近真正片段的遮蔽上，也就是将核心样本靠近原点分布。
+		scale = lerp(0.1f, 1.0f, scale * scale);
+		sample *= scale;
+		ssaoKernel.push_back(sample);
+	}
+
+	// generate noise texture
+	// ----------------------
+	std::vector<glm::vec3> ssaoNoise;
+	for (unsigned int i = 0; i < 16; i++)
+	{
+		glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
+		ssaoNoise.push_back(noise);
+	}
+	//创建一个包含随机旋转向量的4x4纹理；设定它的封装方法为GL_REPEAT，保证它合适地平铺在屏幕上，用来存储噪声
+	unsigned int noiseTexture;
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 	// lighting info
 	// -------------
-	const unsigned int NR_LIGHTS = 32;
-	std::vector<glm::vec3> lightPositions;
-	std::vector<glm::vec3> lightColors;
-	srand(13);
-	for (unsigned int i = 0; i < NR_LIGHTS; i++)
-	{
-		// calculate slightly random offsets
-		float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		float yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
-		float zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-		lightPositions.emplace_back(xPos, yPos, zPos);
-		// also calculate random color
-		float rColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-		float gColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-		float bColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-		lightColors.emplace_back(rColor, gColor, bColor);
-	}
+	glm::vec3 lightPos = glm::vec3(2.0, 4.0, -2.0);
+	glm::vec3 lightColor = glm::vec3(0.2, 0.2, 0.7);
+
 
 	// shader configuration
 	// --------------------
 	shaderLightingPass.use();
 	shaderLightingPass.setInt("gPosition", 0);
 	shaderLightingPass.setInt("gNormal", 1);
-	shaderLightingPass.setInt("gAlbedoSpec", 2);
+	shaderLightingPass.setInt("gAlbedo", 2);
+	shaderLightingPass.setInt("ssao", 3);
+	shaderSSAO.use();
+	shaderSSAO.setInt("gPosition", 0);
+	shaderSSAO.setInt("gNormal", 1);
+	shaderSSAO.setInt("texNoise", 2);
+	shaderSSAOBlur.use();
+	shaderSSAOBlur.setInt("ssaoInput", 0);
 
 	// render loop
     // -----------
@@ -126,76 +173,87 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//渲染g-Buffer，把场景的颜色和几何参数写入g-buffer中
+		// 1. geometry pass: render scene's geometry/color data into gbuffer
+		// -----------------------------------------------------------------
 		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 50.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
 		shaderGeometryPass.use();
 		shaderGeometryPass.setMat4("projection", projection);
 		shaderGeometryPass.setMat4("view", view);
-		for (auto objectPosition : objectPositions)
-		{
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, objectPosition);
-			model = glm::scale(model, glm::vec3(0.25f));
-			shaderGeometryPass.setMat4("model", model);
-			nanosuit.Draw(shaderGeometryPass);
-		}
+		// room cube
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0, 7.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(7.5f, 7.5f, 7.5f));
+		shaderGeometryPass.setMat4("model", model);
+		shaderGeometryPass.setInt("invertedNormals", 1); // invert normals as we're inside the cube
+		renderCube();
+		shaderGeometryPass.setInt("invertedNormals", 0);
+		// nanosuit model on the floor
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 5.0));
+		model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+		model = glm::scale(model, glm::vec3(0.5f));
+		shaderGeometryPass.setMat4("model", model);
+		nanosuit.Draw(shaderGeometryPass);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		//光照Pass：逐一计算每个屏幕大小内的片元的光照（使用g-buffer中的数据）
-		// -----------------------------------------------------------------------------------------------------------------------
+
+		// 2. generate SSAO texture
+		// ------------------------
+		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaderSSAO.use();
+		// Send kernel + rotation
+		for (unsigned int i = 0; i < 64; ++i)
+			shaderSSAO.setVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
+		shaderSSAO.setMat4("projection", projection);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, gPosition);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, gNormal);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, noiseTexture);
+		renderQuad();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+		// 3. blur SSAO texture to remove noise
+		// ------------------------------------
+		glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+		shaderSSAOBlur.use();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+		renderQuad();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+		// 4. lighting pass: traditional deferred Blinn-Phong lighting with added screen-space ambient occlusion
+		// -----------------------------------------------------------------------------------------------------
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		shaderLightingPass.use();
+		// send light relevant uniforms
+		glm::vec3 lightPosView = glm::vec3(camera.GetViewMatrix() * glm::vec4(lightPos, 1.0));
+		shaderLightingPass.setVec3("light.Position", lightPosView);
+		shaderLightingPass.setVec3("light.Color", lightColor);
+		// Update attenuation parameters
+		const float constant  = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+		const float linear    = 0.09;
+		const float quadratic = 0.032;
+		shaderLightingPass.setFloat("light.Linear", linear);
+		shaderLightingPass.setFloat("light.Quadratic", quadratic);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, gPosition);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, gNormal);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-		// send light relevant uniforms
-		for (unsigned int i = 0; i < lightPositions.size(); i++)
-		{
-			shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Position", lightPositions[i]);
-			shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Color", lightColors[i]);
-			// update attenuation parameters and calculate radius
-			const float constant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-			const float linear = 0.7;
-			const float quadratic = 1.8;
-			shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Linear", linear);
-			shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Quadratic", quadratic);
-		}
-		shaderLightingPass.setVec3("viewPos", camera.Position);
-		// finally render quad
+		glActiveTexture(GL_TEXTURE3); // add extra SSAO texture to lighting pass
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
 		renderQuad();
-
-		//把几何深度值buffer的内容拷贝到缺省的帧深度缓冲中去
-		// ----------------------------------------------------------------------------------
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // write to default framebuffer
-		// blit到默认的帧缓冲区。请注意，这可能会或可能不会起作用，因为FBO和默认帧缓冲区的内部格式必须匹配。
-		// 内部格式是实现定义的。这适用于我的所有系统，但如果它不在你的系统上，你可能需要写入
-		// 深度缓冲区在另一个着色器阶段（或以某种方式看到与默认帧缓冲区的内部格式与FBO的内部格式匹配）。
-		glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		// 3. 渲染出所有的灯光所在的位置
-		// --------------------------------
-		shaderLightBox.use();
-		shaderLightBox.setMat4("projection", projection);
-		shaderLightBox.setMat4("view", view);
-		for (unsigned int i = 0; i < lightPositions.size(); i++)
-		{
-			model = glm::mat4(1.0f);
-			model = glm::translate(model, lightPositions[i]);
-			model = glm::scale(model, glm::vec3(0.125f));
-			shaderLightBox.setMat4("model", model);
-			shaderLightBox.setVec3("lightColor", lightColors[i]);
-			renderCube();
-		}
-
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);

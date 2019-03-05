@@ -164,5 +164,10 @@ unsigned int loadTexture(char const *path)
 	return textureID;
 }
 
+inline float lerp(float a, float b, float f)
+{
+	return a + f * (b - a);
+}
+
 // set up vertex data (and buffer(s)) and configure vertex attributes
 // ------------------------------------------------------------------
