@@ -57,21 +57,21 @@ void main()
 
 ![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.4Normal%20Mapping/Reference/normal_mapping_surface_edges.png)
 
-可以得到
+可以得到（以下数学公式如果渲染错误请Clone下来本地查看，在MacDown中测试正常）
 
-<img src="http://latex.codecogs.com/svg.latex?\begin{aligned} E _ { 1 } & = \Delta U _ { 1 } T + \Delta V _ { 1 } B \\ E _ { 2 } & = \Delta U _ { 2 } T + \Delta V _ { 2 } B \end{aligned}" />
+<img src="http://latex.codecogs.com/svg.latex?\begin{aligned} E_1 = \Delta U_1T + \Delta V_1B \\ E_2 = \Delta U_2T + \Delta V_2B \end{aligned}" />
 
 进而得到
 
-<img src="http://latex.codecogs.com/svg.latex?\left[ \begin{array} { c c c } { E _ { 1 x } } & { E _ { 1 y } } & { E _ { 1 z } } \\ { E _ { 2 x } } & { E _ { 2 y } } & { E _ { 2 z } } \end{array} \right] = \left[ \begin{array} { c c } { \Delta U _ { 1 } } & { \Delta V _ { 1 } } \\ { \Delta U _ { 2 } } & { \Delta V _ { 2 } } \end{array} \right] \left[ \begin{array} { c c c } { T _ { x } } & { T _ { y } } & { T _ { z } } \\ { B _ { x } } & { B _ { y } } & { B _ { z } } \end{array} \right]" />
+<img src="http://latex.codecogs.com/svg.latex?\begin{bmatrix} E_{1x} & E_{1y} & E_{1z} \\ E_{2x} & E_{2y} & E_{2z} \end{bmatrix} = \begin{bmatrix} \Delta U_1 & \Delta V_1 \\ \Delta U_2 & \Delta V_2 \end{bmatrix} \begin{bmatrix} T_x & T_y & T_z \\ B_x & B_y & B_z \end{bmatrix}" />
 
 左乘UV的逆得到
 
-<img src="http://latex.codecogs.com/svg.latex?\left[ \begin{array} { l l } { \Delta U _ { 1 } } & { \Delta V _ { 1 } } \\ { \Delta U _ { 2 } } & { \Delta V _ { 2 } } \end{array} \right] ^ { - 1 } \left[ \begin{array} { l l l } { E _ { 1 x } } & { E _ { 1 y } } & { E _ { 1 z } } \\ { E _ { 2 x } } & { E _ { 2 y } } & { E _ { 2 z } } \end{array} \right] = \left[ \begin{array} { c c c } { T _ { x } } & { T _ { y } } & { T _ { z } } \\ { B _ { x } } & { B _ { y } } & { B _ { z } } \end{array} \right]" />
+<img src="http://latex.codecogs.com/svg.latex?\begin{bmatrix} \Delta U_1 & \Delta V_1 \\ \Delta U_2 & \Delta V_2 \end{bmatrix}^{-1} \begin{bmatrix} E_{1x} & E_{1y} & E_{1z} \\ E_{2x} & E_{2y} & E_{2z} \end{bmatrix} = \begin{bmatrix} T_x & T_y & T_z \\ B_x & B_y & B_z \end{bmatrix}" />
 
 写成伴随矩阵的形式：
 
-<img src="http://latex.codecogs.com/svg.latex?\left[ \begin{array} { l l l } { T _ { x } } & { T _ { y } } & { T _ { z } } \\ { B _ { x } } & { B _ { y } } & { B _ { z } } \end{array} \right] = \frac { 1 } { \Delta U _ { 1 } \Delta V _ { 2 } - \Delta U _ { 2 } \Delta V _ { 1 } } \left[ \begin{array} { c c } { \Delta V _ { 2 } } & { - \Delta V _ { 1 } } \\ { - \Delta U _ { 2 } } & { \Delta U _ { 1 } } \end{array} \right] \left[ \begin{array} { c c c } { E _ { 1 x } } & { E _ { 1 y } } & { E _ { 1 z } } \\ { E _ { 2 x } } & { E _ { 2 y } } & { E _ { 2 z } } \end{array} \right]" />
+<img src="http://latex.codecogs.com/svg.latex?\begin{bmatrix} T_x & T_y & T_z \\ B_x & B_y & B_z \end{bmatrix}  = \frac{1}{\Delta U_1 \Delta V_2 - \Delta U_2 \Delta V_1} \begin{bmatrix} \Delta V_2 & -\Delta V_1 \\ -\Delta U_2 & \Delta U_1 \end{bmatrix} \begin{bmatrix} E_{1x} & E_{1y} & E_{1z} \\ E_{2x} & E_{2y} & E_{2z} \end{bmatrix}" />
 
 代码实现如下：
 
