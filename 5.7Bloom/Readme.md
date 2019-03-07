@@ -2,29 +2,29 @@
 
 强调明亮的光源与区域：一种区分明亮光源的方式是使它们在监视器上发出光芒，光源的的光芒向四周发散。这样观察者就会产生光源或亮区的确是强光区。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_example.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_example.png)
 
 Bloom和HDR结合使用效果很好。常见的一个误解是HDR和泛光是一样的，很多人认为两种技术是可以互换的。但是它们是两种不同的技术，用于各自不同的目的上。可以使用默认的8位精确度的帧缓冲，也可以在不使用泛光效果的时候，使用HDR。只不过在有了HDR之后再实现泛光就更简单了。
 
 在场景中渲染一个带有4个立方体形式不同颜色的明亮的光源。带有颜色的发光立方体的亮度在1.5到15.0之间。如果我们将其渲染至HDR颜色缓冲，场景看起来会是这样的：
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_scene.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_scene.png)
 
 我们得到这个HDR颜色缓冲纹理，**提取所有超出一定亮度的fragment**。这样我们就会获得一个只有fragment超过了一定阈限的颜色区域：
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_extracted.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_extracted.png)
 
 我们将这个超过一定亮度阈限的纹理进行**模糊**。泛光效果的强度很大程度上被模糊过滤器的范围和强度所决定。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_blurred.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_blurred.png)
 
 最终的被模糊化的纹理就是我们用来获得发出光晕效果的东西。这个已模糊的纹理要添加到原来的HDR场景纹理的上部。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_small.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_small.png)
 
 泛光的品质很大程度上取决于所用的模糊过滤器的质量和类型。简单的改改模糊过滤器就会极大的改变泛光效果的品质。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_steps.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_steps.png)
 
 <hr>
 
@@ -100,7 +100,7 @@ void main()
 }
 ```
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_attachments.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_attachments.png)
 
 调用时把所有的光源设定为立方体
 
@@ -128,7 +128,7 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 高斯曲线通常被描述为一个钟形曲线，中间的值达到最大化，随着距离的增加，两边的值不断减少。高斯曲线在它的中间处的面积最大，使用它的值作为权重使得近处的样本拥有最大的优先权。从fragment的32×32的四方形区域采样，这个权重随着和fragment的距离变大逐渐减小；通常这会得到更好更真实的模糊效果，这种模糊叫做高斯模糊。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_gaussian_two_pass.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_gaussian_two_pass.png)
 
 高斯方程有个非常巧妙的特性，它允许我们把二维方程分解为两个更小的方程：一个描述水平权重，另一个描述垂直权重。我们首先用水平权重在整个纹理上进行水平模糊，然后在经改变的纹理上进行垂直模糊。利用这个特性，结果是一样的，但是可以节省难以置信的性能，因为我们现在只需做32+32次采样，不再是1024了！这叫做两步高斯模糊。
 
@@ -213,7 +213,7 @@ glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 每次循环我们根据我们打算渲染的是水平或是垂直来绑定两个缓冲其中之一，而将另一个绑定为纹理进行模糊。
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom_blurred_large.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom_blurred_large.png)
 
 泛光的最后一步是把模糊处理的图像和场景原来的HDR纹理进行结合。
 
@@ -240,7 +240,7 @@ void main()
 }
 ```
 
-![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.6Bloom/Reference/bloom.png)
+![image](https://github.com/yu-cao/OpenGL-Learning/blob/master/5.7Bloom/Reference/bloom.png)
 
 ```cpp
 main.cpp整体流程
