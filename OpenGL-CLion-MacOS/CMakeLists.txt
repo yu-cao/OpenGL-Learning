@@ -25,3 +25,10 @@ if (APPLE)
     target_link_libraries(OpenGL_CLion_MacOS "-framework OpenGL")
     #target_link_libraries(OpenGL_CLion_MacOS "-framework GLUT")
 endif()
+
+# 如果MacOS不支持<stdio.h>，输入：
+# sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
+# 参考：https://stackoverflow.com/questions/58278260/cant-compile-a-c-program-on-a-mac-after-upgrading-to-catalina-10-15/58278392#58278392
+# 如果出现<OpenGL/GL>找不到，输入：
+# ln -s "$(xcrun --sdk macosx --show-sdk-path)/System/Library/Frameworks/OpenGL.framework/Headers" /usr/local/include/OpenGL
+# 参考：https://github.com/ziglang/zig/issues/2208
